@@ -1117,9 +1117,30 @@ def scene(name, levels):
     )
 
 
+def sun_times(day, lat=37.5665, lon=126.978):
+    """Sunrise and sunset in Seoul as minutes after local midnight (NOAA approximation)."""
+    gamma = 2 * math.pi / 365 * (day.timetuple().tm_yday - 1)
+    eqtime = 229.18 * (.000075 + .001868 * math.cos(gamma) - .032077 * math.sin(gamma)
+                       - .014615 * math.cos(2 * gamma) - .040849 * math.sin(2 * gamma))
+    decl = (.006918 - .399912 * math.cos(gamma) + .070257 * math.sin(gamma) - .006758 * math.cos(2 * gamma)
+            + .000907 * math.sin(2 * gamma) - .002697 * math.cos(3 * gamma) + .00148 * math.sin(3 * gamma))
+    ha = math.degrees(math.acos(math.cos(math.radians(90.833)) / (math.cos(math.radians(lat)) * math.cos(decl))
+                                - math.tan(math.radians(lat)) * math.tan(decl)))
+    return 720 - 4 * (lon + ha) - eqtime + 540, 720 - 4 * (lon - ha) - eqtime + 540
+
+
 def current_scene(now=None):
-    h = (now or datetime.now(timezone.utc) + timedelta(hours=9)).hour
-    return "dawn" if h < 6 else "morning" if h < 12 else "noon" if h < 18 else "evening"
+    """Pick the scene from the real sun in Seoul, so evening arrives with the actual sunset."""
+    now = now or datetime.now(timezone.utc) + timedelta(hours=9)
+    rise, set_ = sun_times(now.date())
+    m = now.hour * 60 + now.minute
+    if rise - 40 <= m < rise + 180:
+        return "morning"
+    if rise + 180 <= m < set_ - 75:
+        return "noon"
+    if set_ - 75 <= m < set_ + 80:
+        return "evening"
+    return "dawn"
 
 
 def main():

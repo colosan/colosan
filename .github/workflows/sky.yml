@@ -2,9 +2,8 @@ name: sky
 
 on:
   schedule:
-    # 00/06/12/18 KST, plus a retry 30 min later in case a run is skipped
-    - cron: "0 3,9,15,21 * * *"
-    - cron: "30 3,9,15,21 * * *"
+    # every 30 minutes; the scene follows the real sunrise/sunset in Seoul
+    - cron: "7,37 * * * *"
   push:
     branches: [main]
   workflow_dispatch:
@@ -38,6 +37,10 @@ jobs:
           git init -q -b output
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if curl -fsSL "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/output/now.svg" -o current.svg && cmp -s now.svg current.svg; then
+            echo "scene unchanged"; exit 0
+          fi
+          rm -f current.svg
           git add now.svg
           git commit -qm "sky: $(date -u +%FT%TZ)"
           git push -qf "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" output
