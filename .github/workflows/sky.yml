@@ -21,6 +21,9 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Install renderer dependencies
+        run: pip install --quiet numpy pillow
+
       - name: Render the scene for the current hour in Seoul
         env:
           GITHUB_TOKEN: ${{ github.token }}
