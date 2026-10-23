@@ -17,17 +17,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
-      - name: Pick the scene for the current hour in Seoul
-        run: |
-          h=$((10#$(TZ=Asia/Seoul date +%H)))
-          if   [ $h -lt 6 ];  then s=dawn
-          elif [ $h -lt 12 ]; then s=morning
-          elif [ $h -lt 18 ]; then s=noon
-          else                     s=evening
-          fi
-          echo "SCENE=$s" >> "$GITHUB_ENV"
-          mkdir out && cp "assets/$s.svg" out/now.svg
+      - name: Render the scene for the current hour in Seoul
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python scripts/render.py now out/now.svg
 
       # Publish to a single-commit branch so main's history stays clean.
       - name: Publish
@@ -39,5 +36,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add now.svg
-          git commit -qm "sky: $SCENE"
+          git commit -qm "sky: $(date -u +%FT%TZ)"
           git push -qf "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" output
